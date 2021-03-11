@@ -6,13 +6,27 @@ import (
 	"fmt"
 	"github.com/k-ueki/sfdbot/bitflyer/model"
 	"github.com/k-ueki/sfdbot/util"
+	"log"
+	"time"
 )
 
 const (
 	getTickerUrl = "https://lightning.bitflyer.com/api/trade/ticker/all?v=1"
 
-	codeBTCJPY = "BTC_JPY"
+	CodeBTCJPY = "BTC_JPY"
 )
+
+func GetTickerStream(code string, ch chan model.Ticker){
+	for {
+		ticker, err := GetTicker(code)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+		ch <- *ticker
+		time.Sleep(time.Millisecond*500)
+	}
+}
 
 func GetTicker(code string) (*model.Ticker, error) {
 	val, err := util.HttpGet(getTickerUrl)
