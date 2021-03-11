@@ -1,7 +1,7 @@
 package main
 
-import "fmt"
+import "github.com/k-ueki/sfdbot/application"
 
 func main() {
-	fmt.Println("vim-go")
+	application.Start()
 }
