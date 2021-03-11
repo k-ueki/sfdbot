@@ -14,6 +14,7 @@ const (
 	getTickerUrl = "https://lightning.bitflyer.com/api/trade/ticker/all?v=1"
 
 	CodeBTCJPY = "BTC_JPY"
+	CodeBTCJPYFX = "BTC_JPY_FX"
 )
 
 func GetTickerStream(code string, ch chan model.Ticker){
