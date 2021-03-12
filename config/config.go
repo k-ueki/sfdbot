@@ -3,13 +3,16 @@ package config
 import (
 	"log"
 	"os"
+
 	"gopkg.in/ini.v1"
 )
 
 type (
-	ConfigList struct{
-		ApiKey               string
-		ApiSecret            string
+	ConfigList struct {
+		ApiKey    string
+		ApiSecret string
+		TradeSize float64
+		SlackURL  string
 	}
 )
 
@@ -23,7 +26,9 @@ func init() {
 	}
 
 	Config = ConfigList{
-		ApiKey:               cfg.Section("bitflyer").Key("api_key").String(),
-		ApiSecret:            cfg.Section("bitflyer").Key("api_secret").String(),
+		ApiKey:    cfg.Section("bitflyer").Key("api_key").String(),
+		ApiSecret: cfg.Section("bitflyer").Key("api_secret").String(),
+		TradeSize: cfg.Section("trade").Key("size").MustFloat64(),
+		SlackURL:  cfg.Section("slack").Key("url").String(),
 	}
 }
