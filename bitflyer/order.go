@@ -39,7 +39,7 @@ func (api *APIClient) Buy(orderType string, size float64) (*string, error) {
 	return api.Execution(order)
 }
 
-func (api *APIClient) Sell(productCode, orderType string, size float64) (*string, error) {
+func (api *APIClient) Sell(orderType string, size float64) (*string, error) {
 	order := model.SimpleOrderRequest{
 		Code:    CodeBTCJPYFX,
 		Side:           OrderSideSell,
