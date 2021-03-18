@@ -2,8 +2,11 @@ package bitflyer
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/k-ueki/sfdbot/config"
 
 	"github.com/k-ueki/sfdbot/bitflyer/model"
 )
@@ -11,6 +14,7 @@ import (
 const (
 	postSimpleOrderUrl = "/v1/me/sendchildorder"
 	getOrderUrl        = "/v1/me/getchildorders"
+	postCancelOrderUrl = "/v1/me/cancelparentorder"
 
 	OrderTypeLimit  = "LIMIT"
 	OrderTypeMarket = "MARKET"
@@ -19,37 +23,59 @@ const (
 	OrderSideSell = "SELL"
 )
 
-func (api *APIClient) Execution(order model.SimpleOrderRequest) (*string, error) {
+var (
+	simpleBuyOrder = model.SimpleOrderRequest{
+		Code: CodeFXBTCJPY,
+		Type: OrderTypeMarket,
+		Side: OrderSideBuy,
+		Size: config.Config.TradeSize,
+	}
+
+	simpleSellOrder = model.SimpleOrderRequest{
+		Code: CodeFXBTCJPY,
+		Type: OrderTypeMarket,
+		Side: OrderSideSell,
+		Size: config.Config.TradeSize,
+	}
+)
+
+func (api *APIClient) Execution(method string, url string, order interface{}) (*string, error) {
 	body, err := json.Marshal(order)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := api.Request(http.MethodPost, postSimpleOrderUrl, nil, body)
+	resp, err := api.Request(method, url, nil, body)
 	if err != nil {
 		return nil, err
 	}
 	return getOrderID(resp), nil
 }
 
-func (api *APIClient) Buy(orderType string, size float64) (*string, error) {
-	order := model.SimpleOrderRequest{
-		Code: CodeBTCJPYFX,
-		Side: OrderSideBuy,
-		Type: orderType,
-		Size: size,
-	}
-	return api.Execution(order)
+func (api *APIClient) Buy() (*string, error) {
+	return api.Execution(http.MethodPost, postSimpleOrderUrl, simpleBuyOrder)
 }
 
-func (api *APIClient) Sell(orderType string, size float64) (*string, error) {
-	order := model.SimpleOrderRequest{
-		Code: CodeBTCJPYFX,
-		Side: OrderSideSell,
-		Type: orderType,
-		Size: size,
+func (api *APIClient) Sell() (*string, error) {
+	return api.Execution(http.MethodPost, postSimpleOrderUrl, simpleSellOrder)
+}
+
+func (api *APIClient) Cancel(orderID string) error {
+	order := model.NewCancelOrder(orderID)
+	body, err := json.Marshal(order)
+	if err != nil {
+		return err
 	}
-	return api.Execution(order)
+
+	resp, err := api.RequestSimpleResponse(http.MethodPost, postCancelOrderUrl, nil, body)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.New(fmt.Sprintf("failed to cancel: %s", orderID))
+	}
+	return nil
 }
 
 func (api *APIClient) GetOrderByID(id string) (*model.GetOrderResponse, error) {
@@ -77,5 +103,5 @@ func getOrderID(b []byte) *string {
 }
 
 func genGetOrderURLWithID(id string) string {
-	return fmt.Sprintf(`%s?child_order_acceptance_id=%s&product_code=%s`, getOrderUrl, id, CodeBTCJPYFX)
+	return fmt.Sprintf(`%s?child_order_acceptance_id=%s&product_code=%s`, getOrderUrl, id, CodeFXBTCJPY)
 }

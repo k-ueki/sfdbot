@@ -1,5 +1,7 @@
 package model
 
+import "github.com/k-ueki/sfdbot/bitflyer"
+
 type (
 	SimpleOrderRequest struct {
 		Code        string  `json:"product_code"`
@@ -28,4 +30,17 @@ type (
 		ExpiredDate string  `json:"expired_date"`
 		OrderDate   string  `json:"child_order_date"`
 	}
+
+	CancelOrderRequest struct {
+		Code                    string `json:"product_code"`
+		ParentOrderID           string `json:"parent_order_id,omitempty"`
+		ParentOrderAcceptanceID string `json:"parent_order_acceptance_id,omitempty"`
+	}
 )
+
+func NewCancelOrder(accepranceID string) *CancelOrderRequest {
+	return &CancelOrderRequest{
+		Code:                    bitflyer.CodeFXBTCJPY,
+		ParentOrderAcceptanceID: accepranceID,
+	}
+}
