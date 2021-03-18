@@ -12,9 +12,10 @@ import (
 )
 
 const (
-	postSimpleOrderUrl = "/v1/me/sendchildorder"
-	getOrderUrl        = "/v1/me/getchildorders"
-	postCancelOrderUrl = "/v1/me/cancelparentorder"
+	postSimpleOrderUrl       = "/v1/me/sendchildorder"
+	getOrderUrl              = "/v1/me/getchildorders"
+	postCancelParentOrderUrl = "/v1/me/cancelparentorder"
+	postCancelChildOrderUrl  = "/v1/me/cancelchildorder"
 
 	OrderTypeLimit  = "LIMIT"
 	OrderTypeMarket = "MARKET"
@@ -39,6 +40,25 @@ var (
 	}
 )
 
+func NewLimitBuyOrder(price float64) *model.SimpleOrderRequest {
+	return &model.SimpleOrderRequest{
+		Code:  CodeFXBTCJPY,
+		Type:  OrderTypeLimit,
+		Side:  OrderSideBuy,
+		Price: price,
+		Size:  config.Config.TradeSize,
+	}
+}
+func NewLimitSellOrder(price float64) *model.SimpleOrderRequest {
+	return &model.SimpleOrderRequest{
+		Code:  CodeFXBTCJPY,
+		Type:  OrderTypeLimit,
+		Side:  OrderSideSell,
+		Price: price,
+		Size:  config.Config.TradeSize,
+	}
+}
+
 func (api *APIClient) Execution(method string, url string, order interface{}) (*string, error) {
 	body, err := json.Marshal(order)
 	if err != nil {
@@ -60,20 +80,29 @@ func (api *APIClient) Sell() (*string, error) {
 	return api.Execution(http.MethodPost, postSimpleOrderUrl, simpleSellOrder)
 }
 
-func (api *APIClient) Cancel(orderID string) error {
-	order := model.NewCancelOrder(orderID)
+func (api *APIClient) BuyLimit(price float64) (*string, error) {
+	order := NewLimitBuyOrder(price)
+	return api.Execution(http.MethodPost, postSimpleOrderUrl, order)
+}
+
+func (api *APIClient) SellLimit(price float64) (*string, error) {
+	order := NewLimitSellOrder(price)
+	return api.Execution(http.MethodPost, postSimpleOrderUrl, order)
+}
+
+func (api *APIClient) Cancel(order interface{}) error {
 	body, err := json.Marshal(order)
 	if err != nil {
 		return err
 	}
 
-	resp, err := api.RequestSimpleResponse(http.MethodPost, postCancelOrderUrl, nil, body)
+	resp, err := api.RequestSimpleResponse(http.MethodPost, postCancelChildOrderUrl, nil, body)
 	if err != nil {
 		return err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return errors.New(fmt.Sprintf("failed to cancel: %s", orderID))
+		return errors.New("failed to cancel")
 	}
 	return nil
 }
