@@ -1,11 +1,11 @@
 package model
 
 type (
-	Position struct{
+	Position struct {
 		ProductCode         string
 		Side                string
 		Price               float64
-		size                float64
+		Size                float64
 		Commission          float64
 		SwapPointAccumulate float64
 		RequireCollateral   float64

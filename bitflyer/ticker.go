@@ -4,20 +4,21 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/k-ueki/sfdbot/bitflyer/model"
-	"github.com/k-ueki/sfdbot/util"
 	"log"
 	"time"
+
+	"github.com/k-ueki/sfdbot/bitflyer/model"
+	"github.com/k-ueki/sfdbot/util"
 )
 
 const (
 	getTickerUrl = "https://lightning.bitflyer.com/api/trade/ticker/all?v=1"
 
-	CodeBTCJPY = "BTC_JPY"
-	CodeBTCJPYFX = "BTC_JPY_FX"
+	CodeBTCJPY   = "BTC_JPY"
+	CodeFXBTCJPY = "FX_BTC_JPY"
 )
 
-func GetTickerStream(code string, ch chan model.Ticker){
+func GetTickerStream(code string, ch chan model.Ticker) {
 	for {
 		ticker, err := GetTicker(code)
 		if err != nil {
@@ -25,7 +26,7 @@ func GetTickerStream(code string, ch chan model.Ticker){
 			return
 		}
 		ch <- *ticker
-		time.Sleep(time.Millisecond*500)
+		time.Sleep(time.Millisecond * 200)
 	}
 }
 
@@ -35,15 +36,15 @@ func GetTicker(code string) (*model.Ticker, error) {
 		return nil, err
 	}
 
-	tickers:=[]model.Ticker{}
-	if err:=json.Unmarshal(val,&tickers);err!=nil{
-		return nil,err
+	tickers := []model.Ticker{}
+	if err := json.Unmarshal(val, &tickers); err != nil {
+		return nil, err
 	}
 
-	for _,ticker:=range tickers{
-		if ticker.ProductCode==code{
-			return &ticker,nil
+	for _, ticker := range tickers {
+		if ticker.ProductCode == code {
+			return &ticker, nil
 		}
 	}
-	return nil, errors.New(fmt.Sprintf("cannot find %v",code))
+	return nil, errors.New(fmt.Sprintf("cannot find %v", code))
 }
