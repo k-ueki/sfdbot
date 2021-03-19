@@ -9,13 +9,13 @@ import (
 
 func Start() error {
 	api := bitflyer.NewAPIClient()
-	preTicker := model.Ticker{}
+	preTicker := model.RealTimeTicker{}
 
-	tickerCh := make(chan model.Ticker)
-	go bitflyer.GetTickerStream(bitflyer.CodeBTCJPY, tickerCh)
+	tickerCh := make(chan model.RealTimeTicker)
+	go api.GetRealTimeTicker(bitflyer.CodeBTCJPY, tickerCh)
 	for ticker := range tickerCh {
-		//fmt.Println(ticker)
-		ltp := ticker.Ticker.Ltp
+		//fmt.Println(ticker.Ltp)
+		ltp := ticker.Ltp
 
 		// positionの有無
 		positions, err := api.GetPosisionList()
@@ -26,7 +26,8 @@ func Start() error {
 
 		log.Println("sfdPosition: ", *sfdPosition.HaveOrder, sfdPosition.AcceptanceID)
 
-		if preTicker.Ticker.Ltp != ltp {
+		sfdPrice := int64(ltp * 1.05)
+		if preTicker.Ltp != ltp {
 			if len(positions) == 0 {
 				//PositionがなければCancel & IFD指値
 				if sfdPosition.HaveOrder.Sell {
@@ -41,7 +42,7 @@ func Start() error {
 					sfdPosition.Reset()
 				}
 
-				orderAcceptanceID, err := api.SellLimit(int64(ltp*1.05) + 30)
+				orderAcceptanceID, err := api.SellLimit(sfdPrice + 50)
 				if err != nil {
 					log.Fatal(err)
 					break
@@ -71,7 +72,7 @@ func Start() error {
 					sfdPosition.Reset()
 				}
 
-				orderAcceptanceID, err := api.BuyLimit(int64(ltp*1.05) - 15)
+				orderAcceptanceID, err := api.BuyLimit(sfdPrice - 1)
 				if err != nil {
 					log.Fatal(err)
 					break
