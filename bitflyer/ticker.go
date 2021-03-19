@@ -26,7 +26,7 @@ func GetTickerStream(code string, ch chan model.Ticker) {
 			return
 		}
 		ch <- *ticker
-		time.Sleep(time.Millisecond * 300)
+		time.Sleep(time.Millisecond * 800)
 	}
 }
 

@@ -1,7 +1,6 @@
 package application
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/k-ueki/sfdbot/bitflyer"
@@ -15,7 +14,7 @@ func Start() error {
 	tickerCh := make(chan model.Ticker)
 	go bitflyer.GetTickerStream(bitflyer.CodeBTCJPY, tickerCh)
 	for ticker := range tickerCh {
-		fmt.Println(ticker)
+		//fmt.Println(ticker)
 		ltp := ticker.Ticker.Ltp
 
 		// positionの有無
@@ -24,11 +23,8 @@ func Start() error {
 			log.Fatal(err)
 			break
 		}
-		if len(positions) != 0 {
-			sfdPosition.Reset()
-		}
 
-		fmt.Println("sfdPosition: ", *sfdPosition.HaveOrder, sfdPosition.AcceptanceID)
+		log.Println("sfdPosition: ", *sfdPosition.HaveOrder, sfdPosition.AcceptanceID)
 
 		if preTicker.Ticker.Ltp != ltp {
 			if len(positions) == 0 {
@@ -45,7 +41,7 @@ func Start() error {
 					sfdPosition.Reset()
 				}
 
-				orderAcceptanceID, err := api.SellLimit(int64(ltp*1.05) + 2)
+				orderAcceptanceID, err := api.SellLimit(int64(ltp*1.05) + 30)
 				if err != nil {
 					log.Fatal(err)
 					break
@@ -64,15 +60,18 @@ func Start() error {
 						}
 				*/
 				if sfdPosition.HaveOrder.Buy {
-					order := model.NewCancelChildOrder(sfdPosition.AcceptanceID)
-					if err := api.Cancel(order); err != nil {
+					if err := api.Cancel(model.CancelChildOrderRequest{
+						Code:              bitflyer.CodeFXBTCJPY,
+						OrderAcceptanceID: sfdPosition.AcceptanceID,
+					}); err != nil {
+						log.Fatal(err)
 						break
 					}
 					log.Println("canceled previous order")
 					sfdPosition.Reset()
 				}
 
-				orderAcceptanceID, err := api.BuyLimit(int64(ltp*1.05) - 5)
+				orderAcceptanceID, err := api.BuyLimit(int64(ltp*1.05) - 15)
 				if err != nil {
 					log.Fatal(err)
 					break
