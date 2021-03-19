@@ -40,7 +40,7 @@ var (
 	}
 )
 
-func NewLimitBuyOrder(price float64) *model.SimpleOrderRequest {
+func NewLimitBuyOrder(price int64) *model.SimpleOrderRequest {
 	return &model.SimpleOrderRequest{
 		Code:  CodeFXBTCJPY,
 		Type:  OrderTypeLimit,
@@ -49,7 +49,7 @@ func NewLimitBuyOrder(price float64) *model.SimpleOrderRequest {
 		Size:  config.Config.TradeSize,
 	}
 }
-func NewLimitSellOrder(price float64) *model.SimpleOrderRequest {
+func NewLimitSellOrder(price int64) *model.SimpleOrderRequest {
 	return &model.SimpleOrderRequest{
 		Code:  CodeFXBTCJPY,
 		Type:  OrderTypeLimit,
@@ -80,12 +80,12 @@ func (api *APIClient) Sell() (*string, error) {
 	return api.Execution(http.MethodPost, postSimpleOrderUrl, simpleSellOrder)
 }
 
-func (api *APIClient) BuyLimit(price float64) (*string, error) {
+func (api *APIClient) BuyLimit(price int64) (*string, error) {
 	order := NewLimitBuyOrder(price)
 	return api.Execution(http.MethodPost, postSimpleOrderUrl, order)
 }
 
-func (api *APIClient) SellLimit(price float64) (*string, error) {
+func (api *APIClient) SellLimit(price int64) (*string, error) {
 	order := NewLimitSellOrder(price)
 	return api.Execution(http.MethodPost, postSimpleOrderUrl, order)
 }

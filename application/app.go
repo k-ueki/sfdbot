@@ -41,6 +41,8 @@ func Start() error {
 						log.Fatal(err)
 						break
 					}
+					log.Println("canceled previous order")
+					sfdPosition.Reset()
 				}
 
 				orderAcceptanceID, err := api.SellLimit(int64(ltp*1.05) + 2)
@@ -48,7 +50,9 @@ func Start() error {
 					log.Fatal(err)
 					break
 				}
-				sfdPosition.SetSellOrder(*orderAcceptanceID)
+				if *orderAcceptanceID != "" {
+					sfdPosition.SetSellOrder(*orderAcceptanceID)
+				}
 
 			} else {
 				/*
@@ -64,6 +68,8 @@ func Start() error {
 					if err := api.Cancel(order); err != nil {
 						break
 					}
+					log.Println("canceled previous order")
+					sfdPosition.Reset()
 				}
 
 				orderAcceptanceID, err := api.BuyLimit(int64(ltp*1.05) - 5)
@@ -71,7 +77,9 @@ func Start() error {
 					log.Fatal(err)
 					break
 				}
-				sfdPosition.SetBuyOrder(*orderAcceptanceID)
+				if *orderAcceptanceID != "" {
+					sfdPosition.SetBuyOrder(*orderAcceptanceID)
+				}
 			}
 			preTicker = ticker
 		}
