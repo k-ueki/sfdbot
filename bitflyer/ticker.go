@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/k-ueki/sfdbot/bitflyer/model"
 	"github.com/k-ueki/sfdbot/util"
 )
@@ -29,6 +30,44 @@ func GetTickerStream(code string, ch chan model.Ticker) {
 		time.Sleep(time.Millisecond * 800)
 	}
 }
+func (api *APIClient) GetRealTimeTicker(code string, ch chan model.RealTimeTicker) {
+	channel := fmt.Sprintf("lightning_ticker_%s", code)
+	if err := api.WebsocketClient.WriteJSON(&model.JsonRPC2{
+		Version: "2.0",
+		Method:  "subscribe",
+		Params:  &model.SubscribeParam{channel},
+	}); err != nil {
+		log.Fatal("subscribe: ", err)
+		return
+	}
+
+	for {
+		msg := new(model.JsonRPC2)
+		if err := api.WebsocketClient.ReadJSON(&msg); err != nil {
+			ws, _, err := websocket.DefaultDialer.Dial(websocketURL, nil)
+			if err != nil {
+				log.Fatal("cannot restore websocket")
+			}
+			api.WebsocketClient = ws
+			continue
+		}
+
+		if msg.Method == "channelMessage" {
+			switch v := msg.Params.(type) {
+			case map[string]interface{}:
+				for key, binary := range v {
+					if key == "message" {
+						var ticker model.RealTimeTicker
+						if err := bindResponse(binary, &ticker); err != nil {
+							break
+						}
+						ch <- ticker
+					}
+				}
+			}
+		}
+	}
+}
 
 func GetTicker(code string) (*model.Ticker, error) {
 	val, err := util.HttpGet(getTickerUrl)
@@ -47,4 +86,15 @@ func GetTicker(code string) (*model.Ticker, error) {
 		}
 	}
 	return nil, errors.New(fmt.Sprintf("cannot find %v", code))
+}
+
+func bindResponse(response interface{}, v interface{}) error {
+	ms, err := json.Marshal(response)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(ms, &v); err != nil {
+		return err
+	}
+	return nil
 }

@@ -6,31 +6,41 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/k-ueki/sfdbot/config"
 )
 
 const (
-	baseURL = "https://api.bitflyer.com"
+	baseURL      = "https://api.bitflyer.com"
+	websocketURL = "wss://ws.lightstream.bitflyer.com/json-rpc"
 )
 
 type (
 	APIClient struct {
-		Key    string
-		Secret string
-		Client *http.Client
+		Key             string
+		Secret          string
+		Client          *http.Client
+		WebsocketClient *websocket.Conn
 	}
 )
 
 func NewAPIClient() *APIClient {
 	c := config.Config
+	ws, _, err := websocket.DefaultDialer.Dial(websocketURL, nil)
+	if err != nil {
+		log.Fatal("cannot connect websocket")
+		return nil
+	}
 	return &APIClient{
-		Key:    c.ApiKey,
-		Secret: c.ApiSecret,
-		Client: new(http.Client),
+		Key:             c.ApiKey,
+		Secret:          c.ApiSecret,
+		Client:          new(http.Client),
+		WebsocketClient: ws,
 	}
 }
 
